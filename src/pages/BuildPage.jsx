@@ -25,9 +25,30 @@ const INITIAL_STATE = {
 
 function classifyLog(line) {
   const l = line.toLowerCase()
-  if (l.includes('[orch]') || l.includes('orchestrator') || l.includes('step 1')) return 'orch'
-  if (l.includes('[db') || l.includes('schema') || l.includes('supabase setup') || l.includes('step 2')) return 'db'
-  if (l.includes('[fe') || l.includes('frontend') || l.includes('react') || l.includes('step 3')) return 'fe'
+
+  if (l.includes('[orch]') ||
+      l.includes('orchestrator') ||
+      l.includes('step 1') ||
+      l.includes('decomposing') ||
+      l.includes('task specs')) return 'orch'
+
+  if (l.includes('[db') ||
+      l.includes('db agent') ||
+      l.includes('schema') ||
+      l.includes('supabase setup') ||
+      l.includes('step 2') ||
+      l.includes('database')) return 'db'
+
+  if (l.includes('[fe') ||
+      l.includes('frontend') ||
+      l.includes('frontend agent') ||
+      l.includes('react') ||
+      l.includes('step 3') ||
+      l.includes('vite') ||
+      l.includes('tailwind') ||
+      l.includes('building ui') ||
+      l.includes('building react')) return 'fe'
+
   return 'all'
 }
 
@@ -54,6 +75,58 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
   }
 
   function handleLine(line) {
+    // Extract GitHub PR link - multiple patterns
+    const prPatterns = [
+      /https:\/\/github\.com\/[^\s]+\/pull\/\d+/,
+      /PR created:\s*(https:\/\/github\.com\/[^\s]+)/,
+      /PR link\s*:\s*(https:\/\/github\.com\/[^\s]+)/
+    ]
+    for (const pattern of prPatterns) {
+      const match = line.match(pattern)
+      if (match) {
+        const url = match[1] || match[0]
+        setBuildState(prev => ({ ...prev, prLink: url.trim() }))
+        break
+      }
+    }
+
+    // Extract Netlify URL - multiple patterns
+    const netlifyPatterns = [
+      /Netlify URL:\s*(https:\/\/[\w-]+\.netlify\.app)/,
+      /https:\/\/[\w-]+\.netlify\.app/
+    ]
+    for (const pattern of netlifyPatterns) {
+      const match = line.match(pattern)
+      if (match) {
+        const url = match[1] || match[0]
+        setBuildState(prev => ({ ...prev, netlifyUrl: url.trim() }))
+        break
+      }
+    }
+
+    // Feature mode netlify message
+    if (line.includes('Merge PR') && line.includes('Netlify')) {
+      setBuildState(prev => ({ ...prev, netlifyUrl: 'merge-pr' }))
+    }
+
+    // Progress tracking
+    if (line.includes('Step 1') || line.includes('Orchestrator')) {
+      setBuildState(prev => ({ ...prev, progress: 10 }))
+    }
+    if (line.includes('Step 2') || line.includes('DB Agent')) {
+      setBuildState(prev => ({ ...prev, progress: 35 }))
+    }
+    if (line.includes('Step 3') || line.includes('Frontend Agent')) {
+      setBuildState(prev => ({ ...prev, progress: 65 }))
+    }
+    if (line.includes('Step 4') || line.includes('GitHub')) {
+      setBuildState(prev => ({ ...prev, progress: 85 }))
+    }
+    if (line.includes('Pipeline complete') || line.includes('complete!')) {
+      setBuildState(prev => ({ ...prev, progress: 100 }))
+    }
+
+    // Classify log to correct agent panel
     const agent = classifyLog(line)
     if (agent !== 'all') {
       set({ activeAgent: agent })
@@ -61,15 +134,6 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
     } else {
       addLog('orch', line, false)
     }
-    if (line.includes('Step 1')) set({ progress: 10 })
-    if (line.includes('Step 2')) set({ progress: 35 })
-    if (line.includes('Step 3')) set({ progress: 65 })
-    if (line.includes('Step 4')) set({ progress: 85 })
-    if (line.includes('Pipeline complete')) set({ progress: 100 })
-    const prMatch = line.match(/https:\/\/github\.com\/[^\s]+\/pull\/\d+/)
-    if (prMatch) set({ prLink: prMatch[0] })
-    const nlMatch = line.match(/https:\/\/[^\s]+\.netlify\.app/)
-    if (nlMatch) set({ netlifyUrl: nlMatch[0] })
   }
 
   async function handleBuild() {
