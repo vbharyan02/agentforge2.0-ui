@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
-const API = 'https://ready-assuming-bool-mag.trycloudflare.com'
-const WS  = 'wss://ready-assuming-bool-mag.trycloudflare.com'
+const API = 'https://api.agentforge2.xyz'
+const WS  = 'wss://api.agentforge2.xyz'
 
 const AGENTS = [
   { key: 'orch', label: 'Orchestrator', cls: 'orch' },

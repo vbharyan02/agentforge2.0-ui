@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const API = 'https://ready-assuming-bool-mag.trycloudflare.com'
+const API = 'https://api.agentforge2.xyz'
 
 export default function JobsPage({ dark }) {
   const [jobs, setJobs] = useState({})
