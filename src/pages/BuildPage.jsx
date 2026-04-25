@@ -73,6 +73,7 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
   }
 
   async function handleBuild() {
+    // Reset state
     setBuildState(prev => ({
       ...prev,
       agentLogs: { orch: [], db: [], fe: [] },
@@ -83,23 +84,32 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
       status: 'running'
     }))
 
-    const body = mode === 'new' ? { prompt } : { feature, repo }
-    const endpoint = mode === 'new' ? '/build' : '/feature'
-
-    const res = await fetch(`${API}${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
-    })
-    const data = await res.json()
-    set({ jobId: data.jobId })
-
+    // 1. Connect WebSocket FIRST
     const ws = new WebSocket(WS)
     wsRef.current = ws
+    let currentJobId = null
+
+    ws.onopen = async () => {
+      // 2. Make POST request after WS is open
+      const body = buildState.mode === 'new'
+        ? { prompt: buildState.prompt }
+        : { feature: buildState.feature, repo: buildState.repo }
+      const endpoint = buildState.mode === 'new' ? '/build' : '/feature'
+
+      const res = await fetch(`${API}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const data = await res.json()
+      currentJobId = data.jobId
+      set({ jobId: data.jobId })
+    }
 
     ws.onmessage = (e) => {
       const msg = JSON.parse(e.data)
-      if (msg.jobId !== data.jobId) return
+      // Accept messages for our job
+      if (currentJobId && msg.jobId !== currentJobId) return
       if (msg.type === 'log' || msg.type === 'error') {
         handleLine(msg.line)
       }
@@ -114,8 +124,13 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
       }
     }
 
-    ws.onerror = () => {
+    ws.onerror = (e) => {
+      console.error('WebSocket error', e)
       addLog('orch', 'WebSocket error', true)
+    }
+
+    ws.onclose = () => {
+      console.log('WebSocket closed')
     }
   }
 
