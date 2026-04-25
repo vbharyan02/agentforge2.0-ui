@@ -168,6 +168,9 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
       const data = await res.json()
       currentJobId = data.jobId
       set({ jobId: data.jobId })
+
+      // Subscribe to get any logs we missed
+      ws.send(JSON.stringify({ type: 'subscribe', jobId: currentJobId }))
     }
 
     ws.onmessage = (e) => {
