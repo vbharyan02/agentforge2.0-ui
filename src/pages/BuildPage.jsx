@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
 const API = 'https://api.agentforge2.xyz'
-const WS  = 'wss://api.agentforge2.xyz'
+const WS  = 'ws://139.84.219.147:4001'
 
 const AGENTS = [
   { key: 'orch', label: 'Orchestrator', cls: 'orch' },
