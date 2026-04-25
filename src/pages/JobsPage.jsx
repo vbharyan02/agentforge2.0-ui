@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 
-const API = 'http://139.84.219.147:4000'
+const API = 'https://ready-assuming-bool-mag.trycloudflare.com'
 
 export default function JobsPage({ dark }) {
   const [jobs, setJobs] = useState({})

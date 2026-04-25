@@ -1,7 +1,7 @@
 import { useEffect, useRef } from 'react'
 
-const API = 'http://139.84.219.147:4000'
-const WS  = 'ws://139.84.219.147:4000'
+const API = 'https://ready-assuming-bool-mag.trycloudflare.com'
+const WS  = 'wss://ready-assuming-bool-mag.trycloudflare.com'
 
 const AGENTS = [
   { key: 'orch', label: 'Orchestrator', cls: 'orch' },
