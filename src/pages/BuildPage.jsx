@@ -154,6 +154,18 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
     let currentJobId = null
 
     ws.onopen = async () => {
+      // Keep connection alive with ping every 25 seconds
+      const pingInterval = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) {
+          ws.send(JSON.stringify({ type: 'ping' }))
+        } else {
+          clearInterval(pingInterval)
+        }
+      }, 25000)
+
+      // Store interval so we can clear it on close
+      ws.pingInterval = pingInterval
+
       // 2. Make POST request after WS is open
       const body = buildState.mode === 'new'
         ? { prompt: buildState.prompt }
@@ -198,6 +210,7 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
 
     ws.onclose = () => {
       console.log('WebSocket closed')
+      if (ws.pingInterval) clearInterval(ws.pingInterval)
     }
   }
 
