@@ -24,32 +24,33 @@ const INITIAL_STATE = {
 }
 
 function classifyLog(line) {
-  const l = line.toLowerCase()
+  // DB Agent lines
+  if (line.includes('[DB Agent]') ||
+      line.includes('[DB SETUP]') ||
+      line.includes('Step 2') ||
+      line.includes('DB Agent writing') ||
+      line.includes('DB schema ready') ||
+      line.includes('schema.sql') ||
+      line.includes('rls.sql') ||
+      line.includes('seed.sql') ||
+      line.includes('Tables:')) {
+    return 'db'
+  }
 
-  if (l.includes('[orch]') ||
-      l.includes('orchestrator') ||
-      l.includes('step 1') ||
-      l.includes('decomposing') ||
-      l.includes('task specs')) return 'orch'
+  // Frontend Agent lines
+  if (line.includes('[Frontend Agent]') ||
+      line.includes('Step 3') ||
+      line.includes('Frontend Agent building') ||
+      line.includes('Frontend ready') ||
+      line.includes('Pages:') ||
+      line.includes('fe_done')) {
+    return 'fe'
+  }
 
-  if (l.includes('[db') ||
-      l.includes('db agent') ||
-      l.includes('schema') ||
-      l.includes('supabase setup') ||
-      l.includes('step 2') ||
-      l.includes('database')) return 'db'
-
-  if (l.includes('[fe') ||
-      l.includes('frontend') ||
-      l.includes('frontend agent') ||
-      l.includes('react') ||
-      l.includes('step 3') ||
-      l.includes('vite') ||
-      l.includes('tailwind') ||
-      l.includes('building ui') ||
-      l.includes('building react')) return 'fe'
-
-  return 'all'
+  // Everything else → Orchestrator panel
+  // This includes [Orchestrator], [PIPELINE], git output,
+  // GitHub lines, Netlify lines, Step 1, Step 4
+  return 'orch'
 }
 
 export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
@@ -90,24 +91,24 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
       }
     }
 
-    // Extract Netlify URL - multiple patterns
-    const netlifyPatterns = [
-      /Netlify URL:\s*(https:\/\/[\w-]+\.netlify\.app)/,
-      /https:\/\/[\w-]+\.netlify\.app/
-    ]
-    for (const pattern of netlifyPatterns) {
-      const match = line.match(pattern)
+    // Extract Netlify URL
+    // Pattern 1: [PIPELINE] Netlify URL: https://xxx.netlify.app
+    if (line.includes('Netlify URL:')) {
+      const match = line.match(/https:\/\/[\w-]+\.netlify\.app/)
       if (match) {
-        const url = match[1] || match[0]
-        setBuildState(prev => ({ ...prev, netlifyUrl: url.trim() }))
-        break
+        setBuildState(prev => ({ ...prev, netlifyUrl: match[0] }))
       }
     }
 
-    // Feature mode netlify message
-    if (line.includes('Merge PR') && line.includes('Netlify')) {
-      setBuildState(prev => ({ ...prev, netlifyUrl: 'merge-pr' }))
+    // Pattern 2: Netlify site created: https://xxx.netlify.app
+    if (line.includes('Netlify site created:')) {
+      const match = line.match(/https:\/\/[\w-]+\.netlify\.app/)
+      if (match) {
+        setBuildState(prev => ({ ...prev, netlifyUrl: match[0] }))
+      }
     }
+
+    // Pattern 3: feature mode — do NOT set netlifyUrl, PR link is enough
 
     // Progress tracking
     if (line.includes('Step 1') || line.includes('Orchestrator')) {
@@ -128,12 +129,8 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
 
     // Classify log to correct agent panel
     const agent = classifyLog(line)
-    if (agent !== 'all') {
-      set({ activeAgent: agent })
-      addLog(agent, line, false)
-    } else {
-      addLog('orch', line, false)
-    }
+    set({ activeAgent: agent })
+    addLog(agent, line, false)
   }
 
   async function handleBuild() {
