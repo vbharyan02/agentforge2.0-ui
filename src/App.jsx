@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import BuildPage from './pages/BuildPage'
 import JobsPage from './pages/JobsPage'
 import PreviewPage from './pages/PreviewPage'
@@ -23,6 +23,12 @@ export default function App() {
   const [dark, setDark] = useState(true)
   const [buildState, setBuildState] = useState(INITIAL_BUILD_STATE)
   const wsRef = useRef(null)
+
+  useEffect(() => {
+    const handler = (e) => setPage(e.detail)
+    window.addEventListener('switch-tab', handler)
+    return () => window.removeEventListener('switch-tab', handler)
+  }, [])
 
   return (
     <div className={`app ${dark ? 'dark' : 'light'}`} style={{ minHeight: '100vh' }}>
