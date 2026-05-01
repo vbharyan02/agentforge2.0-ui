@@ -1,6 +1,7 @@
 import { useState, useRef } from 'react'
 import BuildPage from './pages/BuildPage'
 import JobsPage from './pages/JobsPage'
+import PreviewPage from './pages/PreviewPage'
 import './App.css'
 
 const INITIAL_BUILD_STATE = {
@@ -40,15 +41,21 @@ export default function App() {
           >
             Jobs
           </button>
+          <button
+            className={`nav-btn ${page === 'preview' ? 'active' : ''}`}
+            onClick={() => setPage('preview')}
+          >
+            🔍 Live Preview
+          </button>
           <button className="theme-toggle" onClick={() => setDark(!dark)}>
             {dark ? '☀️' : '🌙'}
           </button>
         </div>
       </nav>
       <div className="main">
-        {page === 'build'
-          ? <BuildPage dark={dark} buildState={buildState} setBuildState={setBuildState} wsRef={wsRef} />
-          : <JobsPage dark={dark} />}
+        {page === 'build' && <BuildPage dark={dark} buildState={buildState} setBuildState={setBuildState} wsRef={wsRef} />}
+        {page === 'jobs' && <JobsPage dark={dark} />}
+        {page === 'preview' && <PreviewPage dark={dark} />}
       </div>
     </div>
   )
