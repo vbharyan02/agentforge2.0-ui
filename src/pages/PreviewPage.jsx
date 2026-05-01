@@ -38,11 +38,15 @@ export default function PreviewPage({ dark }) {
 
       if (msg.type === 'log') {
         setLogs(prev => [...prev, { text: msg.line, error: false }])
-        if (msg.line.includes('PR link')) {
+
+        // Extract PR link
+        if (msg.line.includes('PR link') || msg.line.includes('PR created')) {
           const match = msg.line.match(/https:\/\/github\.com\/[^\s]+/)
           if (match) setPrLink(match[0].trim())
         }
-        if (msg.line.includes('Netlify URL')) {
+
+        // Extract Netlify URL
+        if (msg.line.includes('Netlify URL') || msg.line.includes('Netlify site created')) {
           const match = msg.line.match(/https:\/\/[\w-]+\.netlify\.app/)
           if (match) setNetlifyUrl(match[0].trim())
         }
@@ -58,7 +62,7 @@ export default function PreviewPage({ dark }) {
       }
 
       if (msg.type === 'done') {
-        if (msg.status === 'done') setStatus('ready')
+        if (msg.status === 'done') setStatus('deployed')
         if (msg.status === 'failed') setStatus('failed')
         clearInterval(ping)
         ws.close()
@@ -92,10 +96,10 @@ export default function PreviewPage({ dark }) {
       { text: '\n[DEPLOY] Pushing to GitHub + Netlify...\n', error: false }
     ])
 
-    const res = await fetch(`${API}/deploy`, {
+    const res = await fetch(`${API}/deploy-now`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ appName: 'current' })
+      body: JSON.stringify({ appName: 'my-app' })
     })
     const data = await res.json()
     connectWS(data.jobId)
@@ -110,10 +114,12 @@ export default function PreviewPage({ dark }) {
       {/* Status */}
       {status !== 'ready' && (
         <div className={`status-bar ${
-          status === 'failed' ? 'status-failed' : 'status-running'
+          status === 'deployed' ? 'status-done' :
+          status === 'failed'   ? 'status-failed' : 'status-running'
         }`}>
           {status === 'changing'  && '⏳ Applying your changes...'}
           {status === 'deploying' && '⏳ Deploying to production...'}
+          {status === 'deployed'  && '🚀 App is live in production!'}
           {status === 'failed'    && '❌ Something went wrong. Check logs.'}
         </div>
       )}

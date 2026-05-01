@@ -283,49 +283,26 @@ export default function BuildPage({ dark, buildState, setBuildState, wsRef }) {
         </div>
       )}
 
-      {/* Preview / Deploy actions after build completes */}
-      {status === 'done' && !prLink && (
-        <div style={{ display: 'flex', gap: 10, marginBottom: 16, alignItems: 'center' }}>
+      {/* View Live Preview after build completes */}
+      {status === 'done' && (
+        <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
           <button
             onClick={() => {
               fetch(`${API}/start-preview`, { method: 'POST' })
-              window.dispatchEvent(new CustomEvent('switch-tab', { detail: 'preview' }))
+              setTimeout(() => {
+                window.dispatchEvent(new CustomEvent('switch-tab', { detail: 'preview' }))
+              }, 2000)
             }}
             style={{
               padding: '11px 24px', borderRadius: 10,
               fontSize: 14, fontWeight: 600, cursor: 'pointer',
               border: 'none',
               background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-              color: '#fff'
+              color: '#fff', flex: 1
             }}
           >
             🔍 View Live Preview
           </button>
-          <span style={{ fontSize: 12, color: 'var(--color-text-tertiary)' }}>or</span>
-          <button
-            onClick={() => {
-              window.dispatchEvent(new CustomEvent('deploy-direct', {
-                detail: buildState.appName
-              }))
-            }}
-            style={{
-              padding: '11px 24px', borderRadius: 10,
-              fontSize: 14, fontWeight: 600, cursor: 'pointer',
-              border: '1px solid var(--color-border-secondary)',
-              background: 'transparent',
-              color: 'var(--color-text-primary)'
-            }}
-          >
-            🚀 Deploy Directly
-          </button>
-        </div>
-      )}
-
-      {/* Links */}
-      {(prLink || netlifyUrl) && (
-        <div className="links-row">
-          {prLink && <a href={prLink} target="_blank" rel="noreferrer" className="link-btn link-github">GitHub PR →</a>}
-          {netlifyUrl && <a href={netlifyUrl} target="_blank" rel="noreferrer" className="link-btn link-netlify">Live App →</a>}
         </div>
       )}
 

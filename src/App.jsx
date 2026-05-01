@@ -59,9 +59,15 @@ export default function App() {
         </div>
       </nav>
       <div className="main">
-        {page === 'build' && <BuildPage dark={dark} buildState={buildState} setBuildState={setBuildState} wsRef={wsRef} />}
-        {page === 'jobs' && <JobsPage dark={dark} />}
-        {page === 'preview' && <PreviewPage dark={dark} />}
+        <div style={{ display: page === 'build' ? 'block' : 'none' }}>
+          <BuildPage dark={dark} buildState={buildState} setBuildState={setBuildState} wsRef={wsRef} />
+        </div>
+        <div style={{ display: page === 'jobs' ? 'block' : 'none' }}>
+          <JobsPage dark={dark} />
+        </div>
+        <div style={{ display: page === 'preview' ? 'block' : 'none' }}>
+          <PreviewPage dark={dark} />
+        </div>
       </div>
     </div>
   )
